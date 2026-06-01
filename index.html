@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#0d0e14"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Quantityzer"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="icon" href="icons/icon-192.png"/>
+<title>Quantityzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --green:#1D9E75;--green2:#5dcaa5;--green3:#9fe1cb;
+  --bg:#0d0e14;--bg2:#13141c;--bg3:#1a1b24;--bg4:#1e1f2a;--bg5:#252633;
+  --text:#ffffff;--text2:rgba(255,255,255,.7);--text3:rgba(255,255,255,.4);--text4:rgba(255,255,255,.2);
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+}
+html,body{height:100%;background:var(--bg);overflow:hidden}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+#app{height:100%;display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:relative;overflow:hidden}
+
+/* ── VIEWS ── */
+.view{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.view.hidden{transform:translateX(100%);pointer-events:none}
+.view.slide-up{transform:translateY(100%);pointer-events:none}
+
+/* ── CAMERA ── */
+#vCamera{background:#000}
+.cam-vf{flex:1;position:relative;overflow:hidden;background:#0a0a0a}
+.cam-vf-bg{position:absolute;inset:0;background:#0d0d14}
+.cam-grid{position:absolute;inset:0;width:100%;height:100%;opacity:.055}
+.cam-hint{position:absolute;top:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,.7);font-size:13px;pointer-events:none}
+.cam-corners{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.cc-wrap{position:relative;width:200px;height:200px}
+.cc{position:absolute;width:22px;height:22px;border-color:#fff;border-style:solid;opacity:.6}
+.cc.tl{top:0;left:0;border-width:2px 0 0 2px;border-radius:4px 0 0 0}
+.cc.tr{top:0;right:0;border-width:2px 2px 0 0;border-radius:0 4px 0 0}
+.cc.bl{bottom:0;left:0;border-width:0 0 2px 2px;border-radius:0 0 0 4px}
+.cc.br{bottom:0;right:0;border-width:0 2px 2px 0;border-radius:0 0 4px 0}
+.preview-img{width:100%;height:100%;object-fit:cover;display:none}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.cam-topbar{position:absolute;top:0;left:0;right:0;padding:max(env(safe-area-inset-top),14px) 18px 0;display:flex;align-items:center;justify-content:space-between;z-index:5}
+.cib{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.cib i{font-size:18px}
+.cib.flash-on{background:rgba(255,208,0,.2)}
+.cib.flash-on i{color:#ffd200}
+.cam-logo{color:#fff;font-size:15px;font-weight:600;opacity:.9;letter-spacing:-.2px}
+.cam-logo span{color:rgba(255,255,255,.3)}
+.cam-bottom{position:absolute;bottom:0;left:0;right:0;padding-bottom:max(env(safe-area-inset-bottom),18px)}
+.cam-row1{display:flex;align-items:center;justify-content:space-between;padding:0 26px 14px}
+.cam-side{width:48px;height:48px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff}
+.cam-side i{font-size:21px}
+.shutter{width:70px;height:70px;border-radius:50%;background:#fff;border:none;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.shutter::before{content:'';position:absolute;inset:-5px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4)}
+.shutter-in{width:58px;height:58px;border-radius:50%;background:#fff}
+.cam-row2{padding:0 18px}
+.obj-pill{width:100%;background:rgba(0,0,0,.55);border:1px solid var(--border2);border-radius:24px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;appearance:none;-webkit-appearance:none}
+.op-l{display:flex;align-items:center;gap:10px}
+.op-ico{width:32px;height:32px;border-radius:10px;background:rgba(29,158,117,.2);border:1px solid rgba(29,158,117,.35);display:flex;align-items:center;justify-content:center}
+.op-ico i{font-size:16px;color:var(--green2)}
+.op-txt{display:flex;flex-direction:column}
+.op-lbl{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px}
+.op-val{font-size:13px;color:#fff;font-weight:500}
+.op-arr{color:rgba(255,255,255,.35);font-size:15px;transition:transform .2s}
+.op-arr.open{transform:rotate(180deg)}
+
+/* ── RESULT OVERLAY ── */
+.result-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(13,14,20,.92);padding:16px 18px calc(env(safe-area-inset-bottom) + 130px);display:none;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.result-overlay.show{display:block}
+.ro-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.ro-num{font-size:52px;font-weight:600;color:#fff;letter-spacing:-2px;line-height:1}
+.ro-obj{font-size:14px;color:var(--text3);margin-top:2px}
+.ro-footer{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ro-badge{padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600}
+.ro-bh{background:#0d2d1f;color:#4ade80}.ro-bm{background:#2d1f00;color:#fbbf24}.ro-bl{background:#2d0d0d;color:#f87171}
+.ro-notes{font-size:12px;color:var(--text3);line-height:1.4}
+.ro-hl{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.25);border-radius:10px;padding:8px 10px;display:flex;align-items:center;gap:7px;margin-top:8px}
+.ro-hl i{color:var(--green2);font-size:14px;flex-shrink:0}
+.ro-hl span{font-size:12px;color:var(--green3)}
+
+/* ── PICKER ── */
+.picker{position:absolute;bottom:0;left:0;right:0;z-index:20;background:var(--bg2);border-radius:22px 22px 0 0;border-top:1px solid var(--border);padding-bottom:max(env(safe-area-inset-bottom),20px);transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.picker.open{transform:translateY(0)}
+.pick-handle{width:34px;height:4px;border-radius:2px;background:rgba(255,255,255,.1);margin:10px auto 14px}
+.pick-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;padding:0 18px 10px}
+.pick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:0 14px}
+.pi{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:14px;padding:10px 4px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.pi.on{background:rgba(29,158,117,.12);border-color:rgba(29,158,117,.35)}
+.pi i{font-size:20px;color:var(--text3)}
+.pi.on i{color:var(--green2)}
+.pi span{font-size:11px;color:var(--text3);font-weight:500}
+.pi.on span{color:var(--green3)}
+.pick-custom{margin:10px 14px 0;display:flex;gap:7px}
+.pick-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:11px;padding:9px 12px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.pick-input::placeholder{color:rgba(255,255,255,.2)}
+.pick-input:focus{border-color:rgba(29,158,117,.45)}
+.pick-ok{background:var(--green);border:none;border-radius:11px;padding:9px 16px;color:#fff;font-size:13px;font-weight:500;cursor:pointer}
+
+/* ── KEY PANEL ── */
+.key-bar{background:var(--bg3);border-bottom:1px solid var(--border);overflow:hidden;max-height:0;transition:max-height .3s ease,padding .3s ease}
+.key-bar.open{max-height:140px;padding:14px 16px}
+.key-lbl{font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.key-row{display:flex;gap:8px}
+.key-inp{flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:11px;padding:10px 12px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.key-inp:focus{border-color:rgba(29,158,117,.5)}
+.key-inp::placeholder{color:rgba(255,255,255,.2)}
+.key-save{background:var(--green);border:none;color:#fff;padding:10px 16px;border-radius:11px;font-size:13px;font-weight:500;cursor:pointer}
+.key-status{font-size:11px;margin-top:5px}
+.key-hint{font-size:11px;color:var(--text4);margin-top:3px;line-height:1.4}
+
+/* ── LOADING / ERROR ── */
+.loading-box{padding:14px;text-align:center}
+.spin{width:26px;height:26px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--green);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading-box p{font-size:13px;color:var(--text3)}
+.errbox{background:rgba(45,13,13,.8);border:1px solid rgba(61,21,21,.8);border-radius:12px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start}
+.errbox i{color:#f87171;font-size:15px;flex-shrink:0;margin-top:1px}
+.errbox span{color:#f87171;font-size:12px;line-height:1.4}
+
+/* ── LIBRARY ── */
+#vLibrary{background:var(--bg)}
+.lib-topbar{padding:max(env(safe-area-inset-top),14px) 20px 0;display:flex;align-items:center;justify-content:space-between}
+.lib-tb-btn{font-size:14px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text);padding:4px 0}
+.lib-logo{font-size:16px;font-weight:600;color:var(--text)}
+.lib-logo span{color:var(--text3)}
+.lib-toolbar{display:flex;align-items:center;padding:14px 20px 12px;border-bottom:1px solid var(--border)}
+.ltb{flex:1;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 0}
+.ltb i{font-size:21px}
+.ltb.active i{color:var(--green)}
+.lib-body{flex:1;overflow-y:auto;padding:12px 16px;-webkit-overflow-scrolling:touch;padding-bottom:90px}
+.lib-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.lib-card{background:var(--bg3);border-radius:14px;overflow:hidden;cursor:pointer;border:1px solid var(--border)}
+.lib-thumb{height:110px;background:var(--bg5);display:flex;align-items:center;justify-content:center;position:relative}
+.lib-thumb i{font-size:30px;color:rgba(255,255,255,.12)}
+.lib-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.lib-count-badge{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 7px;font-size:13px;font-weight:600;color:#fff}
+.lib-card-info{padding:8px 10px}
+.lib-card-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-card-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.lib-list-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.lib-list-thumb{width:52px;height:52px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;position:relative;border:1px solid var(--border)}
+.lib-list-thumb i{font-size:22px;color:rgba(255,255,255,.12)}
+.lib-list-thumb img{width:100%;height:100%;object-fit:cover}
+.lib-list-count{position:absolute;bottom:2px;right:4px;font-size:10px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);border-radius:4px;padding:0 4px}
+.lib-list-info{flex:1;min-width:0}
+.lib-list-name{font-size:14px;font-weight:500;color:var(--text)}
+.lib-list-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.cam-fab{position:absolute;bottom:max(env(safe-area-inset-bottom),20px);left:50%;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;background:var(--green);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;box-shadow:0 0 0 6px rgba(29,158,117,.15)}
+.cam-fab i{font-size:26px;color:#fff}
+
+/* ── SORT OVERLAY ── */
+.sort-overlay{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.55);display:none;flex-direction:column;justify-content:flex-end}
+.sort-overlay.show{display:flex}
+.sort-sheet{background:var(--bg4);border-radius:16px 16px 0 0;padding:8px 0 6px}
+.sort-item{padding:15px 20px;font-size:15px;color:var(--text);cursor:pointer;text-align:center;border-bottom:1px solid var(--border)}
+.sort-item:last-child{border-bottom:none}
+.sort-item.active{color:var(--green)}
+.sort-cancel-btn{background:var(--bg4);margin:8px 14px;border-radius:14px;padding:15px;font-size:15px;font-weight:600;color:var(--text);cursor:pointer;text-align:center;border:none;width:calc(100% - 28px)}
+
+/* ── SEARCH ── */
+#vSearch{background:var(--bg)}
+.search-topbar{padding:max(env(safe-area-inset-top),14px) 14px 10px;display:flex;align-items:center;gap:10px}
+.search-box{flex:1;background:var(--bg4);border-radius:12px;padding:9px 12px;display:flex;align-items:center;gap:8px;border:1px solid var(--border)}
+.search-box i.ti-search{color:var(--green)}
+.search-box i{font-size:16px}
+.search-box input{flex:1;background:none;border:none;outline:none;color:#fff;font-size:14px;font-family:'DM Sans',sans-serif}
+.search-box input::placeholder{color:var(--text3)}
+.search-cancel{font-size:14px;color:var(--text);background:none;border:none;cursor:pointer;white-space:nowrap}
+.search-results{flex:1;overflow-y:auto;padding:4px 16px;-webkit-overflow-scrolling:touch}
+
+/* ── NEW FOLDER ── */
+#vNewFolder{background:var(--bg)}
+.nf-topbar{padding:max(env(safe-area-inset-top),14px) 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.nf-tb{font-size:14px;font-weight:500;background:none;border:none;cursor:pointer}
+.nf-tb.cancel{color:var(--text2)}
+.nf-tb.done{color:var(--green)}
+.nf-title{font-size:15px;font-weight:600;color:var(--text)}
+.nf-body{flex:1;display:flex;flex-direction:column;align-items:center;padding-top:50px;gap:30px}
+.folder-icon{width:130px;height:110px;background:var(--bg4);border-radius:16px 16px 12px 12px;position:relative}
+.folder-icon::before{content:'';position:absolute;top:-14px;left:0;width:55px;height:16px;background:var(--bg4);border-radius:5px 5px 0 0}
+.nf-inp-wrap{width:calc(100% - 32px);background:var(--bg4);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:8px;border:1px solid var(--border2)}
+.nf-inp{flex:1;background:none;border:none;outline:none;color:var(--text3);font-size:15px;font-family:'DM Sans',sans-serif}
+.nf-inp-clear{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px}
+.nf-inp-clear i{font-size:15px}
+
+/* ── SETTINGS ── */
+#vSettings{background:var(--bg)}
+.set-topbar{padding:max(env(safe-area-inset-top),14px) 20px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.set-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)}
+.set-back i{font-size:18px}
+.set-title{font-size:16px;font-weight:600;color:var(--text)}
+.set-body{flex:1;overflow-y:auto;padding:16px}
+.set-section{margin-bottom:20px}
+.set-sec-title{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;padding:0 2px}
+.set-card{background:var(--bg3);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.set-row{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid var(--border);gap:12px;cursor:pointer}
+.set-row:last-child{border-bottom:none}
+.set-row-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.set-row-ico.green{background:rgba(29,158,117,.2)}
+.set-row-ico.green i{color:var(--green2)}
+.set-row-ico.blue{background:rgba(55,138,221,.15)}
+.set-row-ico.blue i{color:#85b7eb}
+.set-row-ico.red{background:rgba(226,75,74,.12)}
+.set-row-ico.red i{color:#f87171}
+.set-row-ico i{font-size:17px}
+.set-row-info{flex:1}
+.set-row-title{font-size:14px;color:var(--text);font-weight:500}
+.set-row-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.set-row-right{color:var(--text3);font-size:13px;display:flex;align-items:center;gap:4px}
+.set-row-right i{font-size:16px}
+.key-status-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block}
+.key-status-dot.off{background:#f87171}
+
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ CAMERA ══ -->
+  <div class="view" id="vCamera">
+    <div class="cam-vf">
+      <div class="cam-vf-bg"></div>
+      <svg class="cam-grid" viewBox="0 0 430 700" preserveAspectRatio="xMidYMid slice"><defs><pattern id="cg" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0L0 0 0 40" fill="none" stroke="white" stroke-width=".5"/></pattern></defs><rect width="100%" height="100%" fill="url(#cg)"/></svg>
+      <div class="cam-corners"><div class="cc-wrap"><div class="cc tl"></div><div class="cc tr"></div><div class="cc bl"></div><div class="cc br"></div></div></div>
+      <div class="cam-hint" id="camHint">Сделайте фото или загрузите его.</div>
+      <img id="camPreview" class="preview-img" alt="preview"/>
+      <canvas id="overlay"></canvas>
+    </div>
+    <div class="cam-topbar">
+      <button class="cib" id="flashBtn" aria-label="Вспышка"><i class="ti ti-bolt" id="flashIco" aria-hidden="true"></i></button>
+      <div class="cam-logo">Quantity<span>zer</span></div>
+      <button class="cib" id="camCloseBtn" aria-label="Закрыть"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="cam-bottom">
+      <div id="resultArea"></div>
+      <div class="cam-row1">
+        <button class="cam-side" id="galleryBtn" aria-label="Галерея"><i class="ti ti-photo" aria-hidden="true"></i></button>
+        <button class="shutter" id="analyzeBtn" aria-label="Анализировать"><div class="shutter-in"></div></button>
+        <div style="width:48px"></div>
+      </div>
+      <div class="cam-row2">
+        <button class="obj-pill" id="pillBtn" aria-label="Выбрать объект">
+          <div class="op-l">
+            <div class="op-ico"><i class="ti ti-stack-2" id="pillIco" aria-hidden="true"></i></div>
+            <div class="op-txt"><span class="op-lbl">Считать</span><span class="op-val" id="pillVal">Брёвна</span></div>
+          </div>
+          <i class="ti ti-chevron-up op-arr" id="pillArr" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div class="picker" id="picker">
+      <div class="pick-handle"></div>
+      <div class="pick-title">Выберите объект</div>
+      <div class="pick-grid" id="pickGrid">
+        <div class="pi on" data-q="logs or wooden beams" data-icon="ti-stack-2" data-label="Брёвна"><i class="ti ti-stack-2" aria-hidden="true"></i><span>Брёвна</span></div>
+        <div class="pi" data-q="boxes or cardboard cartons" data-icon="ti-package" data-label="Коробки"><i class="ti ti-package" aria-hidden="true"></i><span>Коробки</span></div>
+        <div class="pi" data-q="discs, wheels or round objects" data-icon="ti-circle" data-label="Диски"><i class="ti ti-circle" aria-hidden="true"></i><span>Диски</span></div>
+        <div class="pi" data-q="people or persons" data-icon="ti-users" data-label="Люди"><i class="ti ti-users" aria-hidden="true"></i><span>Люди</span></div>
+        <div class="pi" data-q="cars or vehicles" data-icon="ti-car" data-label="Авто"><i class="ti ti-car" aria-hidden="true"></i><span>Авто</span></div>
+        <div class="pi" data-q="bottles" data-icon="ti-bottle" data-label="Бутылки"><i class="ti ti-bottle" aria-hidden="true"></i><span>Бутылки</span></div>
+      </div>
+      <div class="pick-custom">
+        <input class="pick-input" id="pickInput" placeholder="Свой объект..."/>
+        <button class="pick-ok" id="pickOk">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LIBRARY ══ -->
+  <div class="view hidden" id="vLibrary">
+    <div class="lib-topbar">
+      <button class="lib-tb-btn" id="settingsBtn">Настройки</button>
+      <div class="lib-logo">Quantity<span>zer</span></div>
+      <button class="lib-tb-btn" id="selectBtn">Выбрать</button>
+    </div>
+    <div class="lib-toolbar">
+      <button class="ltb" id="folderBtn" aria-label="Новая папка"><i class="ti ti-folder-plus" aria-hidden="true"></i></button>
+      <button class="ltb active" id="viewBtn" aria-label="Вид"><i class="ti ti-list-details" id="viewIco" aria-hidden="true"></i></button>
+      <button class="ltb" id="sortBtn" aria-label="Сортировка"><i class="ti ti-sort-descending" aria-hidden="true"></i></button>
+      <button class="ltb" id="searchBtn" aria-label="Поиск"><i class="ti ti-search" aria-hidden="true"></i></button>
+    </div>
+    <div class="lib-body" id="libBody"></div>
+    <button class="cam-fab" id="openCamBtn" aria-label="Открыть камеру"><i class="ti ti-camera" aria-hidden="true"></i></button>
+    <div class="sort-overlay" id="sortOverlay">
+      <div class="sort-sheet" id="sortSheet">
+        <div class="sort-item" data-sort="name">Сортировать по имени</div>
+        <div class="sort-item active" data-sort="date">Сортировать по дате</div>
+        <div class="sort-item" data-sort="size">Сортировать по размеру</div>
+      </div>
+      <button class="sort-cancel-btn" id="sortCancel">Отмена</button>
+    </div>
+  </div>
+
+  <!-- ══ SEARCH ══ -->
+  <div class="view hidden" id="vSearch">
+    <div class="search-topbar">
+      <div class="search-box">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" placeholder="Поиск" id="searchInput"/>
+        <button style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.25)" id="searchClear"><i class="ti ti-x" style="font-size:15px" aria-hidden="true"></i></button>
+      </div>
+      <button class="search-cancel" id="searchCancelBtn">Отмена</button>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <!-- ══ NEW FOLDER ══ -->
+  <div class="view hidden" id="vNewFolder">
+    <div class="nf-topbar">
+      <button class="nf-tb cancel" id="nfCancel">Отменить</button>
+      <div class="nf-title">Новая папка</div>
+      <button class="nf-tb done" id="nfDone">Готово</button>
+    </div>
+    <div class="nf-body">
+      <div class="folder-icon"></div>
+      <div class="nf-inp-wrap">
+        <input class="nf-inp" id="nfInput" placeholder="Введите имя папки"/>
+        <button class="nf-inp-clear" id="nfClear"><i class="ti ti-x" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="view hidden" id="vSettings">
+    <div class="set-topbar">
+      <button class="set-back" id="setBack" aria-label="Назад"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+      <div class="set-title">Настройки</div>
+    </div>
+    <div class="set-body">
+      <div class="set-section">
+        <div class="set-sec-title">API ключ</div>
+        <div class="set-card">
+          <div class="set-row" id="keyRow">
+            <div class="set-row-ico green"><i class="ti ti-key" aria-hidden="true"></i></div>
+            <div class="set-row-info">
+              <div class="set-row-title">Anthropic API Key</div>
+              <div class="set-row-sub" id="keySubtitle">Не задан</div>
+            </div>
+            <div class="set-row-right"><i class="ti ti-chevron-down" id="keyChevron" aria-hidden="true"></i></div>
+          </div>
+          <div class="key-bar" id="keyBar">
+            <div class="key-lbl">API ключ</div>
+            <div class="key-row">
+              <input type="password" class="key-inp" id="keyInput" placeholder="sk-ant-api03-..."/>
+              <button class="key-save" id="keySave">Сохранить</button>
+            </div>
+            <div class="key-status" id="keyStatus"></div>
+            <div class="key-hint">Получить: console.anthropic.com → API Keys. Хранится только на устройстве.</div>
+          </div>
+        </div>
+      </div>
+      <div class="set-section">
+        <div class="set-sec-title">Приложение</div>
+        <div class="set-card">
+          <div class="set-row">
+            <div class="set-row-ico blue"><i class="ti ti-info-circle" aria-hidden="true"></i></div>
+            <div class="set-row-info">
+              <div class="set-row-title">Версия</div>
+            </div>
+            <div class="set-row-right">1.0.0</div>
+          </div>
+          <div class="set-row" id="clearHistBtn">
+            <div class="set-row-ico red"><i class="ti ti-trash" aria-hidden="true"></i></div>
+            <div class="set-row-info">
+              <div class="set-row-title">Очистить историю</div>
+              <div class="set-row-sub" id="histCountSub">0 записей</div>
+            </div>
+            <div class="set-row-right"><i class="ti ti-chevron-right" aria-hidden="true"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" accept="image/*" id="fileInput"/>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
